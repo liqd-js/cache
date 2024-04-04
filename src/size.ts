@@ -42,21 +42,17 @@ function _sizeof( value: any, visited: Set<any> ): number
             if( value instanceof Function ){ bytes += 0 } else
             if( value instanceof Date ){ bytes += stringSize( value.toISOString() ) } else
             if( value instanceof RegExp ){ bytes += stringSize( value.toString() ) } else
-            if( Array.isArray( value )){ for( let v of value ){ bytes += _sizeof( v, visited )} break; }
-            if( value instanceof Set ){ for( let v of value.entries() ){ bytes += _sizeof( v, visited )} break; }
-            if( value instanceof Map ){ for( let [ k, v ] of value.entries() ){ bytes += _sizeof( k, visited ) + _sizeof( v, visited )} break; }
-            if( visited.has( value )){ break }
-
-            if( Array.isArray( obj ))
+            if( Array.isArray( value )){ for( let v of value ){ bytes += _sizeof( v, visited )} break; } else
+            if( value instanceof Set ){ for( let v of value.entries() ){ bytes += _sizeof( v, visited )} break; } else
+            if( value instanceof Map ){ for( let [ k, v ] of value.entries() ){ bytes += _sizeof( k, visited ) + _sizeof( v, visited )} break; } else
+            if( visited.has( value )){ break } else
+            if( Array.isArray( value )) { for ( let v of value ){ bytes += _sizeof( v, visited )} }
+            else
             {
-                if( options.sortArrays ){ obj = obj.slice(0).sort( compare ) }
-
-                return '[' + obj.map(( v: any ) => _objectStringify( v, visited, options )).join(',') + ']';
+                if( visited.has( value )){ break }
+                visited.add( value );
+                for( let key in value ){ bytes += stringSize( key ) + _sizeof( value[ key ], visited )}
             }
-            if( obj.constructor !== Object ){ return getIndexHash( obj )}
-
-            let keys = Object.keys( obj );
-
             break;
         }
         case 'string'   : bytes += SIZE.STRING + 4 * Math.ceil( value.length / 4 ); break;
