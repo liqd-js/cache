@@ -6,7 +6,9 @@
   "license": "MIT",
   "main": "dist/cache.js",
   "types": "dist/cache.d.ts",
-  "files": [ "dist/**/*" ],
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
@@ -17,6 +19,10 @@
     "url": "git+https://github.com/liqd-js/cache.git"
   },
   "devDependencies": {
-    "typescript": "^5.4.2"
+    "@types/node": "^20.11.30",
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "object-sizeof": "^2.6.4"
   }
 }
