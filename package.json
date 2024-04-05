@@ -19,6 +19,7 @@
     "url": "git+https://github.com/liqd-js/cache.git"
   },
   "devDependencies": {
+    "@liqd-js/heap": "1.1.1",
     "@types/node": "^20.11.30",
     "typescript": "^5.4.3"
   },
