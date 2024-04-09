@@ -5,14 +5,13 @@ import Queue from "@liqd-js/queue";
 type WatchedValue = { id: string, seeks: Uint16Array };
 type CachedValue<T> = WatchedValue & { data: T, size: number, stale?: Date };
 
-const HEAP_INDEX_POINTERS = 16;
 const CACHE_TO_WATCHED_RATIO = 0.9;
 
 export default class Cache<T>
 {
     private index = 0;
-    private readonly cached: CacheHeap<CachedValue<T>, string> = new CacheHeap<CachedValue<T>, string>( ( a, b ) => this.score(a) - this.score(b), i => i.id );
-    private readonly watched: CacheHeap<WatchedValue, string> = new CacheHeap<WatchedValue, string>( (a, b ) => this.score(a) - this.score(b), i => i.id);
+    private readonly cached: CacheHeap<CachedValue<T>, string>;
+    private readonly watched: CacheHeap<WatchedValue, string>;
     private readonly stale?: Queue<CachedValue<T>> = undefined;
     private readonly cachedMaxItems: number = Infinity;
     private readonly cachedMaxSize?: number;
@@ -23,11 +22,6 @@ export default class Cache<T>
     private readonly precision: number = 10;
     /** Expiration time of a record in seconds */
     private readonly staleTime?: number;
-
-    private readonly cachedItemMetaSize: number;
-    private readonly watchedItemMetaSize: number;
-
-    private cacheSize: number = 0;
 
     constructor(
         options: {
@@ -43,14 +37,25 @@ export default class Cache<T>
         this.cachedMaxItems = options.maxItems || this.cachedMaxItems;
         this.cachedMaxSize = options.maxSize && options.maxSize * CACHE_TO_WATCHED_RATIO;
 
-        const cacheRecord: Omit<CachedValue<T>, 'data'> = { id: '6532518e7d7c2904492ef1c3', seeks: new Uint16Array( this.precision ), size: 0 };
-        this.cachedItemMetaSize = sizeof( cacheRecord );
-        const watchRecord: WatchedValue = { id: '6532518e7d7c2904492ef1c3', seeks: new Uint16Array( this.precision ) };
-        this.watchedItemMetaSize = sizeof( watchRecord );
+        this.cached = new CacheHeap(
+            ( a, b ) => this.score(a) - this.score(b),
+            i => i.id,
+            {
+                itemMetaSize: sizeof({ id: '6532518e7d7c2904492ef1c3', seeks: new Uint16Array( this.precision ), size: 0 }),
+                dataProperty: 'data'
+            });
+
+        this.watched = new CacheHeap(
+            ( a, b ) => this.score(a) - this.score(b),
+            i => i.id,
+            {
+                itemMetaSize: sizeof({ id: '6532518e7d7c2904492ef1c3', seeks: new Uint16Array( this.precision ) }),
+                dataProperty: 'data'
+            });
 
         if ( options.maxSize )
         {
-            this.watchedMaxItems = options.maxSize * 0.1 / this.watchedItemMetaSize;
+            this.watchedMaxItems = options.maxSize * 0.1 / this.watched.itemMetaSize;
         }
 
         setInterval(() =>
@@ -89,6 +94,7 @@ export default class Cache<T>
         if ( cached )
         {
             this.updateCached( cached, value, true );
+            this.cached.update( cached );
             return;
         }
 
@@ -118,7 +124,6 @@ export default class Cache<T>
             this.cached.delete( cached );
             this.stale?.delete( cached );
             this.updateWatchMaxItems();
-            this.cacheSize -= cached.size;
         }
 
         const watched = this.watched.get( key );
@@ -163,19 +168,19 @@ export default class Cache<T>
 
     private totalCachedSize()
     {
-        return this.cacheSize + this.cached.size * ( this.cachedItemMetaSize + HEAP_INDEX_POINTERS );
+        return this.cached.memory();
     }
 
     private totalWatchedSize()
     {
-        return this.watched.size * ( this.watchedItemMetaSize + HEAP_INDEX_POINTERS );
+        return this.watched.memory();
     }
 
     private updateWatchMaxItems()
     {
         if ( this.cachedMaxSize ) { return }
 
-        this.watchedMaxItems = this.cacheSize * (1 - CACHE_TO_WATCHED_RATIO) / this.watchedItemMetaSize;
+        this.watchedMaxItems = this.cached.memory() * (1 - CACHE_TO_WATCHED_RATIO) / this.watched.itemMetaSize;
     }
 
     private createCached( key: string, data: T, incrementSeek: boolean = false ): CachedValue<T>
@@ -202,8 +207,6 @@ export default class Cache<T>
 
     private updateCached( cached: CachedValue<T>, element: T, incrementSeek: boolean = false)
     {
-        this.cacheSize -= cached.size;
-
         cached.data = element;
         cached.size = sizeof( element );
         cached.stale = this.calculateStale();
@@ -215,7 +218,6 @@ export default class Cache<T>
             this.stale.push( cached );
         }
 
-        this.cacheSize += cached.size;
         this.updateWatchMaxItems();
     }
 
@@ -234,7 +236,6 @@ export default class Cache<T>
             this.stale?.push( element );
 
             this.updateWatchMaxItems();
-            this.cacheSize += element.size;
 
             return true;
         }
@@ -248,7 +249,6 @@ export default class Cache<T>
             this.stale?.push( element );
 
             this.updateWatchMaxItems();
-            this.cacheSize += element.size;
 
             return true;
         }
@@ -280,7 +280,7 @@ export default class Cache<T>
         return this.cached.size < this.cachedMaxItems
             && (
                 !this.cachedMaxSize
-                || this.totalCachedSize() + element.size + this.cachedItemMetaSize + HEAP_INDEX_POINTERS <= this.cachedMaxSize
+                || this.totalCachedSize() + this.cached.totalItemSize( element ) <= this.cachedMaxSize
             );
     }
 
