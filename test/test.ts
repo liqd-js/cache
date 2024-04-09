@@ -12,7 +12,7 @@ import Cache from "../src/cache";
 
 function test_cache()
 {
-    const cache = new Cache<number>(2, 2);
+    const cache = new Cache<number>(2, 2, 1000, 10, 10);
     cache.set("a", 1);
     cache.print();
     cache.get("a")

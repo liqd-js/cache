@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@liqd-js/heap": "1.1.1",
+    "@liqd-js/queue": "1.0.1",
     "@types/node": "^20.11.30",
     "typescript": "^5.4.3"
   },
