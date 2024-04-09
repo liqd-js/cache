@@ -1,35 +1,39 @@
-// import sizeof from "../src/size";
+import sizeof from "../src/size";
 import Cache from "../src/cache";
 import assert = require("node:assert");
 
 const timeout = ( timeout: number ) => new Promise( resolve => setTimeout( resolve, timeout ));
 
-// function test_size()
-// {
-//     assert(sizeof({ a: 1 }) === 14)
-//     assert(sizeof(123123) === 8);
-//     assert(sizeof("1") === 6);
-//     assert(sizeof([1, 2, 3]) === 24);
-//     assert(sizeof([undefined, { a: 1 }, 1, "a"]) === 30);
-// }
+function test_size()
+{
+    assert(sizeof({ a: 1 }) === 14)
+    assert(sizeof(123123) === 8);
+    assert(sizeof("1") === 6);
+    assert(sizeof([1, 2, 3]) === 24);
+    assert(sizeof([undefined, { a: 1 }, 1, "a"]) === 30);
+}
 
 function test_basic_cache()
 {
-    const cache = new Cache<number>( 3, 3, 10000000, 5, 10000000000 );
-    cache.set("a", 1);
+    const cache = new Cache<object>( { maxItems: 3, /*maxSize: 1000000000,*/ staleTime: 3 } );
+    cache.set("a", {"a": 12, b: {c: [1, 2, 3]}});
+    console.log({ memory: cache.memory(), utilization: cache.utilization() });
     cache.get("a");
     cache.get("a");
-    cache.set("b", 2);
-    cache.set("c", 3);
-    cache.set("d", 4);
+    cache.set("b",  {"a": 12, b: {c: [1, 2, 3]}});
+    console.log({ memory: cache.memory(), utilization: cache.utilization() });
+    cache.set("c",  {"a": 12, b: {c: [1, 2, 3]}});
+    console.log({ memory: cache.memory(), utilization: cache.utilization() });
+    cache.set("d",  {"a": 12, b: {c: [1, 2, 3]}});
+    console.log({ memory: cache.memory(), utilization: cache.utilization() });
     assert.equal(cache.get("d"), undefined);
-    cache.set("d", 5);
+    cache.set("d",  {"a": 12, b: {c: [1, 2, 3]}});
     assert.equal(cache.get("d"), 5);
 }
 
 async function test_stale()
 {
-    const cache = new Cache<number>( 3, 3, 10000000, 5, 3 );
+    const cache = new Cache<number>( { maxItems: 3, maxSize: 1000, staleTime: 3 } );
     cache.set("a", 1);
     await timeout(1000);
     cache.set("b", 2);
@@ -58,5 +62,6 @@ async function test_stale()
     assert.equal(cache.get("c"), undefined);
 }
 
+test_size();
 test_basic_cache();
 test_stale().then(() => process.exit(0));
