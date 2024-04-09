@@ -2,8 +2,8 @@ import sizeof from "./size";
 import CacheHeap from "./cache-heap";
 import Queue from "@liqd-js/queue";
 
-type WatchedValue = { id: string, size: number, seeks: Uint16Array, stale?: Date };
-type CachedValue<T> = WatchedValue & { data: T };
+type WatchedValue = { id: string, size: number, seeks: Uint16Array };
+type CachedValue<T> = WatchedValue & { data: T, stale?: Date };
 
 export default class Cache<T>
 {
@@ -13,14 +13,14 @@ export default class Cache<T>
     private readonly stale?: Queue<CachedValue<T>> = undefined;
 
     constructor(
-        private readonly cacheSize: number,
-        private readonly watchSize: number,
+        public readonly cacheSize: number,
+        public readonly watchSize: number,
         /** Number of seconds for which seek history is tracked */
-        private readonly cacheTime: number = 300,
+        public readonly cacheTime: number = 300,
         /** Number of buckets */
-        private readonly precision: number = 10,
+        public readonly precision: number = 10,
         /** Expiration time of a record in seconds */
-        private readonly staleTime?: number,
+        public readonly staleTime?: number,
     )
     {
         if ( this.staleTime )
@@ -43,7 +43,7 @@ export default class Cache<T>
         console.log( 'Cached:' )
         for( let item of this.cached.values() )
         {
-            console.log( item.data );
+            console.log( item );
         }
 
         console.log( 'Watched:' )
@@ -55,10 +55,11 @@ export default class Cache<T>
 
     public get( key: string ): T | void
     {
+        this.removeStale();
+
         const cached = this.cached.get( key );
         if( cached )
         {
-            this.removeStale();
             this.incrementSeek( cached.seeks );
             return cached.data;
         }
@@ -72,7 +73,8 @@ export default class Cache<T>
 
     public set( key: string, value: T )
     {
-        // is already cached
+        this.removeStale();
+
         const cached = this.cached.get( key );
         if ( cached )
         {
@@ -80,7 +82,6 @@ export default class Cache<T>
             return;
         }
 
-        // is not cached, but is watched
         const watched = this.watched.get( key );
         if ( watched )
         {
@@ -91,7 +92,6 @@ export default class Cache<T>
             }
         }
 
-        // is not cached and not watched
         const newElem: CachedValue<T> = this.createCached(key, value, true);
         if ( !this.loadToCache( newElem ) )
         {
@@ -146,7 +146,11 @@ export default class Cache<T>
         cached.stale = this.calculateStale();
         incrementSeek && this.incrementSeek( cached.seeks );
 
-        // TODO: update in staleQueue
+        if ( this.stale )
+        {
+            this.stale.delete( cached );
+            this.stale.push( cached );
+        }
     }
 
     private calculateStale()
@@ -161,6 +165,7 @@ export default class Cache<T>
         if ( this.cached.size < this.cacheSize )
         {
             this.cached.push( element );
+            this.stale && this.stale.push( element );
             return true;
         }
 
@@ -169,6 +174,8 @@ export default class Cache<T>
         {
             this.cached.delete( worst );
             this.cached.push( element );
+            this.stale && this.stale.delete( worst );
+            this.stale && this.stale.push( element );
             return true;
         }
 
@@ -208,7 +215,7 @@ export default class Cache<T>
 
             this.cached.delete( stale );
 
-            this.addToWatched({ id: stale.id, size: stale.size, seeks: this.initSeek(), stale: undefined });
+            this.addToWatched({ id: stale.id, size: stale.size, seeks: this.initSeek() });
 
             stale = this.stale.top();
         }
@@ -226,7 +233,6 @@ export default class Cache<T>
         return seek;
     }
 
-    // TODO: spojit s stale updateom
     private incrementSeek( seek: Uint16Array )
     {
         if( seek[this.index] === 0xFFFF )
@@ -242,21 +248,21 @@ export default class Cache<T>
         let score = 0;
         for ( let i = 0; i < this.precision; i++ )
         {
-            score += value.seeks[(this.precision + this.index - i) % this.precision];
+            score += value.seeks[(this.precision + this.index - i) % this.precision] * (1 << i);
         }
         return score;
     }
 }
 
-function bytesToSize( bytes: number )
-{
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+// function bytesToSize( bytes: number )
+// {
+//     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+//
+//     if( bytes === 0 ){ return '0 Byte'; }
+//
+//     const i = Math.floor( Math.log( bytes ) / Math.log( 1024 ) );
+//
+//     return Math.round( bytes / Math.pow( 1024, i ) ) + ' ' + sizes[i];
+// }
 
-    if( bytes === 0 ){ return '0 Byte'; }
-
-    const i = Math.floor( Math.log( bytes ) / Math.log( 1024 ) );
-
-    return Math.round( bytes / Math.pow( 1024, i ) ) + ' ' + sizes[i];
-}
-
-setInterval(() => console.log( bytesToSize( process.memoryUsage.rss() )), 1000 );
+// setInterval(() => console.log( bytesToSize( process.memoryUsage.rss() )), 1000 );

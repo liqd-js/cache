@@ -12,25 +12,13 @@ import Cache from "../src/cache";
 
 function test_cache()
 {
-    const cache = new Cache<number>(2, 2, 1000, 10, 10);
+    const cache = new Cache<number>( 3, 3, 10000000, 5, 10000000000 );
+    // console.assert(!cache.get( "a" ));
     cache.set("a", 1);
-    cache.print();
-    cache.get("a")
-    cache.get("a")
-    cache.set("b", 2);
-    cache.get("b")
-    cache.get("b")
-    cache.print();
-    cache.set("c", 3);
-    cache.print();
-    cache.set("d", 4);
-    cache.print();
-    cache.set("e", 5);
-    cache.print();
-    cache.set("f", 6);
-    cache.print();
-    cache.set("g", 7);
-    cache.print();
+    // cache.print();
+    console.log(cache.get("a"));
+    // cache.get("a");
+    // cache.print();
 }
 
 test_cache();

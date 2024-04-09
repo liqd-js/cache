@@ -10,7 +10,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "test": "ts-node test/",
+    "test": "ts-node test/test",
     "build": "tsc",
     "version": "npm i && tsc && npm publish --access public"
   },
