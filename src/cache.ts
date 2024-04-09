@@ -8,7 +8,7 @@ type CachedValue<T> = WatchedValue & { data: T, stale?: Date };
 export default class Cache<T>
 {
     private index = 0;
-    private readonly cached: CacheHeap<CachedValue<T>, string> = new CacheHeap<CachedValue<T>, string>( ( a, b ) => this.score(a) - this.score(b) );
+    private readonly cached: CacheHeap<CachedValue<T>, string> = new CacheHeap<CachedValue<T>, string>( ( a, b ) => this.score(a) - this.score(b), i => i.id );
     private readonly watched: CacheHeap<WatchedValue, string> = new CacheHeap<WatchedValue, string>( (a, b ) => this.score(a) - this.score(b) );
     private readonly stale?: Queue<CachedValue<T>> = undefined;
 
@@ -57,7 +57,10 @@ export default class Cache<T>
     {
         this.removeStale();
 
+        console.log( this.cached );
+
         const cached = this.cached.get( key );
+        console.log({ cached });
         if( cached )
         {
             this.incrementSeek( cached.seeks );
