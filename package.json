@@ -10,7 +10,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "ts-node test/",
     "build": "tsc",
     "version": "npm i && tsc && npm publish --access public"
   },
@@ -19,10 +19,10 @@
     "url": "git+https://github.com/liqd-js/cache.git"
   },
   "devDependencies": {
-    "@liqd-js/heap": "1.1.1",
-    "@liqd-js/queue": "1.0.1",
-    "@types/node": "^20.11.30",
-    "typescript": "^5.4.3"
+    "@liqd-js/heap": "1.1.2",
+    "@liqd-js/queue": "1.0.2",
+    "@types/node": "^20.12.6",
+    "typescript": "^5.4.4"
   },
   "dependencies": {
     "object-sizeof": "^2.6.4"
