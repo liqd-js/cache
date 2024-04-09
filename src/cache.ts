@@ -9,7 +9,7 @@ export default class Cache<T>
 {
     private index = 0;
     private readonly cached: CacheHeap<CachedValue<T>, string> = new CacheHeap<CachedValue<T>, string>( ( a, b ) => this.score(a) - this.score(b), i => i.id );
-    private readonly watched: CacheHeap<WatchedValue, string> = new CacheHeap<WatchedValue, string>( (a, b ) => this.score(a) - this.score(b) );
+    private readonly watched: CacheHeap<WatchedValue, string> = new CacheHeap<WatchedValue, string>( (a, b ) => this.score(a) - this.score(b), i => i.id);
     private readonly stale?: Queue<CachedValue<T>> = undefined;
 
     constructor(
@@ -38,29 +38,11 @@ export default class Cache<T>
         }, this.cacheTime );
     }
 
-    public print()
-    {
-        console.log( 'Cached:' )
-        for( let item of this.cached.values() )
-        {
-            console.log( item );
-        }
-
-        console.log( 'Watched:' )
-        for( let item of this.watched.values() )
-        {
-            console.log( item );
-        }
-    }
-
     public get( key: string ): T | void
     {
         this.removeStale();
 
-        console.log( this.cached );
-
         const cached = this.cached.get( key );
-        console.log({ cached });
         if( cached )
         {
             this.incrementSeek( cached.seeks );
@@ -81,14 +63,14 @@ export default class Cache<T>
         const cached = this.cached.get( key );
         if ( cached )
         {
-            this.updateCached( cached, value );
+            this.updateCached( cached, value, true );
             return;
         }
 
         const watched = this.watched.get( key );
         if ( watched )
         {
-            const cached: CachedValue<T> = this.initCached( watched, value );
+            const cached: CachedValue<T> = this.initCached( watched, value, true );
             if ( this.loadToCache( cached ) )
             {
                 this.watched.delete( watched );
@@ -257,15 +239,15 @@ export default class Cache<T>
     }
 }
 
-// function bytesToSize( bytes: number )
-// {
-//     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-//
-//     if( bytes === 0 ){ return '0 Byte'; }
-//
-//     const i = Math.floor( Math.log( bytes ) / Math.log( 1024 ) );
-//
-//     return Math.round( bytes / Math.pow( 1024, i ) ) + ' ' + sizes[i];
-// }
+function bytesToSize( bytes: number )
+{
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 
-// setInterval(() => console.log( bytesToSize( process.memoryUsage.rss() )), 1000 );
+    if( bytes === 0 ){ return '0 Byte'; }
+
+    const i = Math.floor( Math.log( bytes ) / Math.log( 1024 ) );
+
+    return Math.round( bytes / Math.pow( 1024, i ) ) + ' ' + sizes[i];
+}
+
+setInterval(() => console.log( bytesToSize( process.memoryUsage.rss() )), 1000 );
