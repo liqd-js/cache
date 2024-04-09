@@ -15,25 +15,25 @@ function test_size()
 
 function test_basic_cache()
 {
-    const cache = new Cache<object>( { maxItems: 3, /*maxSize: 1000000000,*/ staleTime: 3 } );
-    cache.set("a", {"a": 12, b: {c: [1, 2, 3]}});
+    const cache = new Cache<number>( { maxItems: 3, /*maxSize: 1000000000,*/ staleTime: 3 } );
+    cache.set("a", 1);
     console.log({ memory: cache.memory(), utilization: cache.utilization() });
     cache.get("a");
     cache.get("a");
-    cache.set("b",  {"a": 12, b: {c: [1, 2, 3]}});
+    cache.set("b", 2);
     console.log({ memory: cache.memory(), utilization: cache.utilization() });
-    cache.set("c",  {"a": 12, b: {c: [1, 2, 3]}});
+    cache.set("c", 3);
     console.log({ memory: cache.memory(), utilization: cache.utilization() });
-    cache.set("d",  {"a": 12, b: {c: [1, 2, 3]}});
+    cache.set("d", 4);
     console.log({ memory: cache.memory(), utilization: cache.utilization() });
     assert.equal(cache.get("d"), undefined);
-    cache.set("d",  {"a": 12, b: {c: [1, 2, 3]}});
+    cache.set("d", 5);
     assert.equal(cache.get("d"), 5);
 }
 
 async function test_stale()
 {
-    const cache = new Cache<number>( { maxItems: 3, maxSize: 1000, staleTime: 3 } );
+    const cache = new Cache<number>( { maxItems: 3, staleTime: 3 } );
     cache.set("a", 1);
     await timeout(1000);
     cache.set("b", 2);

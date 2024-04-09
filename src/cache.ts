@@ -32,7 +32,7 @@ export default class Cache<T>
         }
     )
     {
-        this.staleTime && ( this.stale = new Queue() );
+        options.staleTime && ( this.stale = new Queue() ) && ( this.staleTime = options.staleTime );
         this.watchTime = options.cacheTime || this.watchTime;
         this.cachedMaxItems = options.maxItems || this.cachedMaxItems;
         this.cachedMaxSize = options.maxSize && options.maxSize * CACHE_TO_WATCHED_RATIO;
