@@ -1,6 +1,6 @@
 {
   "name": "@liqd-js/cache",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "author": "radixxko",
   "license": "MIT",
@@ -18,13 +18,13 @@
     "type": "git",
     "url": "git+https://github.com/liqd-js/cache.git"
   },
-  "devDependencies": {
-    "@liqd-js/heap": "1.1.2",
-    "@liqd-js/queue": "1.0.2",
-    "@types/node": "^20.12.6",
-    "typescript": "^5.4.4"
-  },
   "dependencies": {
-    "object-sizeof": "^2.6.4"
+    "object-sizeof": "^2.6.4",
+    "@liqd-js/heap": "1.1.2",
+    "@liqd-js/queue": "1.0.2"
+  },
+  "devDependencies": {
+      "@types/node": "^20.12.6",
+      "typescript": "^5.4.4"
   }
 }
