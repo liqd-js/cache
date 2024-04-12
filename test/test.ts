@@ -13,6 +13,15 @@ function test_size()
     assert(sizeof([undefined, { a: 1 }, 1, "a"]) === 30);
 }
 
+function test_cache_without_size()
+{
+    const cache = new Cache<number>( { staleTime: 30 } );
+    cache.set("a", 1);
+    cache.set("b", 2);
+    assert(cache.size() === 2);
+    assert(cache.get("a") === 1);
+}
+
 function test_basic_cache()
 {
     const cache = new Cache<number>( { maxItems: 3, /*maxSize: 1000000000,*/ staleTime: 3 } );
@@ -63,5 +72,6 @@ async function test_stale()
 }
 
 test_size();
+test_cache_without_size();
 test_basic_cache();
 test_stale().then(() => process.exit(0));
