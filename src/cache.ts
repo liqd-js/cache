@@ -116,6 +116,35 @@ export default class Cache<T>
         }
     }
 
+    public invalidate( subject: string | ((key: string) => boolean) )
+    {
+        if ( typeof subject === 'string' )
+        {
+            const cached = this.cached.get( subject );
+            if ( cached )
+            {
+                this.invalidateOne( subject );
+            }
+        }
+        else
+        {
+            for( let key of this.cached.values() )
+            {
+                if ( subject( key.id ) )
+                {
+                    this.invalidateOne( key.id );
+                }
+            }
+        }
+    }
+
+    public invalidateAll()
+    {
+        this.cached.clear();
+        this.watched.clear();
+        this.stale?.clear();
+    }
+
     public delete( key: string )
     {
         const cached = this.cached.get( key );
@@ -164,6 +193,18 @@ export default class Cache<T>
             score += value.seeks[(this.precision + this.index - i) % this.precision] * (1 << i);
         }
         return score;
+    }
+
+    private invalidateOne( key: string )
+    {
+        const cached = this.cached.get( key );
+        if ( cached )
+        {
+            this.cached.delete( cached );
+            this.stale?.delete( cached );
+            this.addToWatched({ id: cached.id, seeks: cached.seeks });
+            this.updateWatchMaxItems();
+        }
     }
 
     private totalCachedSize()
