@@ -5,6 +5,13 @@ import Queue from "@liqd-js/queue";
 type WatchedValue = { id: string, seeks: Uint16Array };
 type CachedValue<T> = WatchedValue & { data: T, size: number, stale?: Date };
 
+export type CacheOptions = {
+    maxItems?: number,
+    maxSize?: number,
+    cacheTime?: number,
+    staleTime?: number
+}
+
 const CACHE_TO_WATCHED_RATIO = 0.9;
 
 export default class Cache<T>
@@ -24,12 +31,7 @@ export default class Cache<T>
     private readonly staleTime?: number;
 
     constructor(
-        options: {
-            maxItems?: number,
-            maxSize?: number,
-            cacheTime?: number,
-            staleTime?: number,
-        }
+        options: CacheOptions
     )
     {
         options.staleTime && ( this.stale = new Queue() ) && ( this.staleTime = options.staleTime );
